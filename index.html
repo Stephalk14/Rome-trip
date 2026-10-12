@@ -1,0 +1,753 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Roman Holiday</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;0,900;1,400;1,600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=Libre+Franklin:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.js"></script>
+<style>
+:root {
+  color-scheme: light;
+  --paper: #f6f1e7;
+  --paper-2: #efe7d8;
+  --card: #fffdf8;
+  --ink: #1d1a16;
+  --ink-2: #4f4840;
+  --ink-3: #82786c;
+  --rule: #d8cdb9;
+  --accent: #a6362a;      /* Roman terracotta */
+  --gold: #a87a1c;
+  --d1: #2b4a78; --d2: #a87a1c; --d3: #a6362a; --d4: #4f7340;
+  /* chart slots (validated reference palette, light) */
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --s6: #008300;
+  --buffer: #8a8378;
+  --serif-d: "Playfair Display", Georgia, serif;
+  --serif: "Source Serif 4", Georgia, serif;
+  --sans: "Libre Franklin", "Helvetica Neue", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --paper: #17150f; --paper-2: #201d16; --card: #221f18;
+    --ink: #f1ebdf; --ink-2: #cbc2b2; --ink-3: #998f80; --rule: #3c362b;
+    --accent: #e0705f; --gold: #d6a849;
+    --d1: #7f9fd3; --d2: #d6a849; --d3: #e0705f; --d4: #8fb57c;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300;
+    --buffer: #8d8578;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #17150f; --paper-2: #201d16; --card: #221f18;
+  --ink: #f1ebdf; --ink-2: #cbc2b2; --ink-3: #998f80; --rule: #3c362b;
+  --accent: #e0705f; --gold: #d6a849;
+  --d1: #7f9fd3; --d2: #d6a849; --d3: #e0705f; --d4: #8fb57c;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300;
+  --buffer: #8d8578;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--paper); color: var(--ink); font-family: var(--serif); font-size: 17px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+a { color: inherit; }
+img { display: block; max-width: 100%; }
+.wrap { max-width: 1320px; margin: 0 auto; padding: 0 28px; }
+.kicker { font-family: var(--sans); font-weight: 700; font-size: 11.5px; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); }
+.rule { border: 0; border-top: 1px solid var(--rule); margin: 0; }
+
+/* masthead */
+.masthead { border-bottom: 3px double var(--ink); }
+.masthead .bar { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 12px 0; font-family: var(--sans); font-size: 11.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-2); }
+.masthead h1 { font-family: var(--serif-d); font-weight: 900; font-size: clamp(54px, 11vw, 150px); line-height: .9; letter-spacing: -.02em; margin: 6px 0 14px; text-align: center; }
+.masthead h1 em { font-weight: 400; font-style: italic; color: var(--accent); }
+.theme-btn { font: inherit; letter-spacing: inherit; text-transform: inherit; background: none; border: 1px solid var(--rule); color: var(--ink-2); padding: 4px 10px; border-radius: 99px; cursor: pointer; }
+
+/* hero */
+.hero { display: grid; grid-template-columns: 1.35fr 1fr; gap: 0; border-bottom: 1px solid var(--ink); }
+.hero-img { position: relative; min-height: 520px; background: var(--paper-2) center/cover no-repeat; }
+.hero-img figcaption { position: absolute; left: 0; bottom: 0; background: rgba(15,12,8,.62); color: #f3ede2; font-family: var(--sans); font-size: 11px; padding: 6px 10px; letter-spacing: .03em; }
+.hero-img figcaption a { color: inherit; }
+.hero-copy { padding: 40px 40px 34px; display: flex; flex-direction: column; gap: 18px; border-left: 1px solid var(--ink); }
+.hero-copy h2 { font-family: var(--serif-d); font-weight: 700; font-size: clamp(30px, 3.4vw, 46px); line-height: 1.05; margin: 0; }
+.hero-copy h2 i { font-weight: 400; }
+.dek { font-size: 19px; color: var(--ink-2); font-style: italic; margin: 0; }
+.byline { font-family: var(--sans); font-size: 12px; color: var(--ink-3); letter-spacing: .06em; text-transform: uppercase; }
+
+.countdown { margin-top: auto; border-top: 1px solid var(--ink); padding-top: 18px; }
+.cd-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
+.cd-cell { text-align: center; }
+.cd-num { font-family: var(--serif-d); font-weight: 900; font-size: clamp(40px, 5vw, 64px); line-height: 1; font-variant-numeric: tabular-nums; }
+.cd-lbl { font-family: var(--sans); font-size: 10.5px; letter-spacing: .2em; text-transform: uppercase; color: var(--ink-3); margin-top: 6px; }
+.cd-flight { font-family: var(--sans); font-size: 12.5px; color: var(--ink-2); margin-top: 14px; display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.cd-flight b { color: var(--ink); }
+
+/* facts strip */
+.facts { display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: 1px solid var(--ink); }
+.fact { padding: 18px 22px; border-right: 1px solid var(--rule); }
+.fact:last-child { border-right: 0; }
+.fact .big { font-family: var(--serif-d); font-size: 34px; font-weight: 700; line-height: 1.1; }
+.fact .small { font-size: 14.5px; color: var(--ink-2); }
+
+/* section heads */
+.sec-head { display: flex; align-items: baseline; gap: 18px; padding: 44px 0 18px; }
+.sec-head .num { font-family: var(--serif-d); font-style: italic; font-size: 54px; color: var(--accent); line-height: 1; }
+.sec-head h3 { font-family: var(--serif-d); font-size: clamp(30px, 4vw, 44px); margin: 0; line-height: 1.05; }
+.sec-head p { margin: 4px 0 0; color: var(--ink-2); font-style: italic; }
+
+/* itinerary + map */
+.planner { display: grid; grid-template-columns: minmax(360px, 1fr) 1.25fr; gap: 28px; align-items: start; }
+.tabs { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--ink); margin-bottom: 18px; }
+.tab { font: inherit; background: none; border: 0; border-right: 1px solid var(--ink); padding: 10px 6px 9px; cursor: pointer; color: var(--ink); text-align: center; }
+.tab:last-child { border-right: 0; }
+.tab .t-day { display: block; font-family: var(--sans); font-weight: 700; font-size: 10.5px; letter-spacing: .18em; text-transform: uppercase; color: var(--ink-3); }
+.tab .t-date { display: block; font-family: var(--serif-d); font-size: 22px; font-weight: 700; line-height: 1.15; }
+.tab[aria-selected="true"] { background: var(--dc); color: #fff; }
+.tab[aria-selected="true"] .t-day { color: rgba(255,255,255,.8); }
+.tab:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
+
+.day-title { font-family: var(--serif-d); font-size: 30px; line-height: 1.1; margin: 0 0 4px; }
+.day-title i { font-weight: 400; color: var(--dc); }
+.day-sub { color: var(--ink-2); margin: 0 0 16px; font-size: 15.5px; }
+.day-intro::first-letter { font-family: var(--serif-d); float: left; font-size: 64px; line-height: .8; padding: 6px 8px 0 0; color: var(--dc); font-weight: 700; }
+.day-intro { margin: 0 0 18px; }
+
+.stops { list-style: none; margin: 0; padding: 0; position: relative; }
+.stops::before { content: ""; position: absolute; left: 64px; top: 8px; bottom: 8px; width: 1px; background: var(--rule); }
+.stop { display: grid; grid-template-columns: 56px 18px 1fr; gap: 0 8px; padding: 0 0 4px; position: relative; }
+.stop .time { font-family: var(--sans); font-weight: 600; font-size: 13px; text-align: right; padding-top: 12px; color: var(--ink); font-variant-numeric: tabular-nums; }
+.stop .time.soft { color: var(--ink-3); font-weight: 500; }
+.stop .dot { width: 11px; height: 11px; border-radius: 50%; background: var(--paper); border: 2px solid var(--dc); margin: 15px 0 0 3px; position: relative; z-index: 1; }
+.stop.nopin .dot { border-style: dashed; border-color: var(--ink-3); }
+.stop-btn { display: grid; grid-template-columns: 74px 1fr; gap: 12px; text-align: left; background: none; border: 1px solid transparent; border-radius: 4px; padding: 8px; font: inherit; color: inherit; cursor: pointer; width: 100%; }
+.stop-btn:hover { background: var(--card); border-color: var(--rule); }
+.stop-btn:focus-visible { outline: 2px solid var(--dc); outline-offset: 1px; }
+.stop.active .stop-btn { background: var(--card); border-color: var(--dc); box-shadow: 0 1px 0 var(--rule); }
+.stop.active .dot { background: var(--dc); }
+.thumb { width: 74px; height: 74px; object-fit: cover; border-radius: 2px; background: var(--paper-2); }
+.stop-name { font-family: var(--serif-d); font-weight: 700; font-size: 18px; line-height: 1.2; display: block; }
+.stop-note { font-size: 14.5px; color: var(--ink-2); display: block; margin-top: 2px; line-height: 1.45; }
+.stop-meta { font-family: var(--sans); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--dc); margin-top: 5px; display: inline-block; font-weight: 700; }
+.stop.nopin .stop-btn { grid-template-columns: 1fr; cursor: default; }
+.stop.nopin .stop-btn:hover { background: none; border-color: transparent; }
+
+.map-col { position: sticky; top: 16px; }
+.map-frame { border: 1px solid var(--ink); background: var(--paper-2); padding: 8px; }
+#map { height: min(78vh, 760px); min-height: 440px; width: 100%; }
+.map-cap { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-family: var(--sans); font-size: 11.5px; color: var(--ink-3); padding: 8px 2px 0; }
+.map-cap button { font: inherit; background: none; border: 1px solid var(--rule); color: var(--ink-2); border-radius: 99px; padding: 3px 10px; cursor: pointer; }
+.map-cap button:hover { border-color: var(--ink-2); }
+
+/* pins */
+.pin { width: 30px; height: 30px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: var(--pc); border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,.35); cursor: pointer; display: grid; place-items: center; transition: opacity .25s, filter .25s; }
+.pin span { transform: rotate(45deg); color: #fff; font-family: var(--sans); font-weight: 700; font-size: 12px; }
+.pin.dim { opacity: .38; filter: grayscale(.7); }
+.pin.on { outline: 3px solid rgba(255,255,255,.9); box-shadow: 0 0 0 6px var(--pc), 0 4px 12px rgba(0,0,0,.4); }
+.maplibregl-popup-content { padding: 0; border-radius: 4px; overflow: hidden; background: #fffdf8; color: #1d1a16; box-shadow: 0 8px 28px rgba(0,0,0,.3); }
+.maplibregl-popup-close-button { color: #fff; font-size: 22px; padding: 2px 8px; text-shadow: 0 1px 3px rgba(0,0,0,.6); }
+.pop img { width: 280px; height: 170px; object-fit: cover; background: #e9e1d2; }
+.pop .pb { padding: 10px 12px 12px; width: 280px; }
+.pop .pk { font-family: var(--sans); font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: #a6362a; font-weight: 700; }
+.pop h4 { font-family: var(--serif-d); font-size: 20px; margin: 2px 0 4px; line-height: 1.15; }
+.pop p { margin: 0; font-family: var(--serif); font-size: 13.5px; color: #4f4840; line-height: 1.4; }
+.pop .cr { font-family: var(--sans); font-size: 10px; color: #82786c; margin-top: 8px; }
+
+/* gallery */
+.gallery { columns: 4 240px; column-gap: 18px; }
+.g-item { break-inside: avoid; margin: 0 0 18px; cursor: pointer; background: none; border: 0; padding: 0; width: 100%; text-align: left; font: inherit; color: inherit; display: block; }
+.g-item img { width: 100%; height: auto; background: var(--paper-2); filter: saturate(.92); transition: filter .2s; }
+.g-item:hover img { filter: saturate(1.1); }
+.g-item .gc { font-size: 14px; color: var(--ink-2); margin-top: 6px; line-height: 1.35; }
+.g-item .gc b { font-family: var(--serif-d); color: var(--ink); font-size: 16px; }
+
+/* budget */
+.budget { display: grid; grid-template-columns: 1.4fr 1fr; gap: 36px; align-items: start; }
+.hero-num { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+.hero-num .n { font-family: var(--serif-d); font-weight: 900; font-size: 76px; line-height: 1; font-variant-numeric: tabular-nums; }
+.hero-num .l { color: var(--ink-2); font-style: italic; }
+.stack { display: flex; height: 54px; margin: 22px 0 10px; gap: 2px; }
+.seg { position: relative; height: 100%; transition: flex-basis .35s ease; min-width: 2px; cursor: default; }
+.seg:first-child { border-radius: 4px 0 0 4px; }
+.seg:last-child { border-radius: 0 4px 4px 0; }
+.seg.buf { background: repeating-linear-gradient(45deg, var(--buffer) 0 2px, transparent 2px 7px); box-shadow: inset 0 0 0 1.5px var(--buffer); }
+.seg:hover, .seg:focus-visible { filter: brightness(1.08); outline: 2px solid var(--ink); outline-offset: 1px; z-index: 2; }
+.axis { display: flex; justify-content: space-between; font-family: var(--sans); font-size: 11px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.legend { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 6px 16px; margin: 18px 0 0; padding: 0; list-style: none; font-size: 14.5px; }
+.legend li { display: flex; align-items: center; gap: 8px; }
+.sw { width: 12px; height: 12px; border-radius: 3px; flex: none; }
+.legend .v { margin-left: auto; font-family: var(--sans); font-size: 13px; font-variant-numeric: tabular-nums; color: var(--ink-2); }
+.tip { position: fixed; pointer-events: none; z-index: 50; background: var(--ink); color: var(--paper); font-family: var(--sans); font-size: 12.5px; padding: 7px 10px; border-radius: 4px; opacity: 0; transition: opacity .12s; max-width: 260px; }
+.tip b { font-size: 14px; }
+
+.whatif { background: var(--card); border: 1px solid var(--rule); padding: 20px 22px; }
+.whatif h4 { font-family: var(--serif-d); font-size: 22px; margin: 4px 0 12px; }
+.whatif label { display: flex; gap: 10px; align-items: flex-start; font-size: 15px; margin: 12px 0; cursor: pointer; }
+.whatif input[type=checkbox] { margin-top: 5px; accent-color: var(--accent); }
+.range-row { font-family: var(--sans); font-size: 13px; display: flex; justify-content: space-between; color: var(--ink-2); }
+.whatif input[type=range] { width: 100%; accent-color: var(--accent); }
+.status { margin-top: 14px; padding: 10px 12px; border-left: 4px solid var(--st); background: var(--paper); font-size: 14.5px; }
+.status b { font-family: var(--sans); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; }
+
+table.costs { width: 100%; border-collapse: collapse; font-size: 14.5px; margin-top: 26px; }
+table.costs th, table.costs td { padding: 7px 4px; border-bottom: 1px solid var(--rule); text-align: left; vertical-align: top; }
+table.costs th { font-family: var(--sans); font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); font-weight: 700; }
+table.costs td.r, table.costs th.r { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+table.costs tr.tot td { font-weight: 600; border-bottom: 2px solid var(--ink); }
+table.costs .st { font-family: var(--sans); font-size: 11px; color: var(--ink-3); }
+details.tbl summary { cursor: pointer; font-family: var(--sans); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); font-weight: 700; margin-top: 20px; }
+
+/* pull quote + tips */
+.pull { font-family: var(--serif-d); font-style: italic; font-size: clamp(26px, 3.2vw, 38px); line-height: 1.2; text-align: center; max-width: 900px; margin: 54px auto 10px; padding: 24px 0; border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink); }
+.pull small { display: block; font-family: var(--sans); font-style: normal; font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--ink-3); margin-top: 12px; }
+.tips { columns: 3 280px; column-gap: 34px; column-rule: 1px solid var(--rule); }
+.tips div { break-inside: avoid; margin-bottom: 18px; font-size: 15.5px; }
+.tips h5 { font-family: var(--sans); font-size: 11.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); margin: 0 0 4px; }
+
+/* credits */
+.credits { font-size: 13.5px; color: var(--ink-2); columns: 2 380px; column-gap: 34px; padding: 0; margin: 0; list-style: none; }
+.credits li { break-inside: avoid; padding: 6px 0; border-bottom: 1px dotted var(--rule); }
+.credits b { color: var(--ink); font-weight: 600; }
+footer { margin-top: 50px; border-top: 3px double var(--ink); padding: 18px 0 40px; font-family: var(--sans); font-size: 12px; color: var(--ink-3); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+
+@media (max-width: 980px) {
+  .hero { grid-template-columns: 1fr; }
+  .hero-img { min-height: 340px; }
+  .hero-copy { border-left: 0; border-top: 1px solid var(--ink); padding: 26px 0; }
+  .planner, .budget { grid-template-columns: 1fr; }
+  .map-col { position: relative; top: 0; order: -1; }
+  #map { height: 58vh; min-height: 360px; }
+  .facts { grid-template-columns: repeat(2, 1fr); }
+  .fact:nth-child(2) { border-right: 0; }
+  .fact:nth-child(-n+2) { border-bottom: 1px solid var(--rule); }
+}
+@media (max-width: 560px) {
+  .wrap { padding: 0 16px; }
+  .masthead .bar span:nth-child(2) { display: none; }
+  .tab .t-date { font-size: 17px; }
+  .stop { grid-template-columns: 44px 16px 1fr; }
+  .stops::before { left: 51px; }
+  .stop-btn { grid-template-columns: 58px 1fr; }
+  .thumb { width: 58px; height: 58px; }
+  .hero-num .n { font-size: 58px; }
+  .facts { grid-template-columns: 1fr; }
+  .fact { border-right: 0; border-bottom: 1px solid var(--rule); }
+  .pop img, .pop .pb { width: 230px; }
+}
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="bar">
+      <span>The Christmas Issue · December 2026</span>
+      <span>Larnaca → Roma · 4 days · 2 travellers</span>
+      <button class="theme-btn" id="themeBtn" type="button">Light / Dark</button>
+    </div>
+    <hr class="rule">
+    <h1>Roma <em>a Natale</em></h1>
+  </div>
+</header>
+
+<main>
+<div class="wrap">
+  <section class="hero">
+    <figure class="hero-img" id="heroImg" style="margin:0">
+      <figcaption id="heroCap"></figcaption>
+    </figure>
+    <div class="hero-copy">
+      <div class="kicker">Cover story · Four days, €600 each</div>
+      <h2>Fountains after ten, pizza by weight, and <i>a city wrapped in lights.</i></h2>
+      <p class="dek">Two 22-year-olds from Cyprus, one cabin bag each and a Christmas week in Rome. Every stop is on the map below, and the budget still keeps the full €150 safety net.</p>
+      <div class="byline">Fri 18 – Mon 21 December 2026 · Cyprus Airways CY340 / CY341</div>
+      <div class="countdown" aria-live="off">
+        <div class="kicker">Wheels up in</div>
+        <div class="cd-grid">
+          <div class="cd-cell"><div class="cd-num" id="cdD">–</div><div class="cd-lbl">Days</div></div>
+          <div class="cd-cell"><div class="cd-num" id="cdH">–</div><div class="cd-lbl">Hours</div></div>
+          <div class="cd-cell"><div class="cd-num" id="cdM">–</div><div class="cd-lbl">Minutes</div></div>
+          <div class="cd-cell"><div class="cd-num" id="cdS">–</div><div class="cd-lbl">Seconds</div></div>
+        </div>
+        <div class="cd-flight"><span><b>CY340</b> Larnaca 14:40 → Fiumicino 17:00</span><span>Fri 18 Dec</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="facts" aria-label="Trip at a glance">
+    <div class="fact"><div class="kicker">Colosseum</div><div class="big">€4</div><div class="small">EU 18–25 reduced ticket, instead of €18</div></div>
+    <div class="fact"><div class="kicker">Pantheon</div><div class="big">€2</div><div class="small">EU youth price (full price is €7)</div></div>
+    <div class="fact"><div class="kicker">Trevi Fountain</div><div class="big">Free</div><div class="small">after 22:00 on the first night</div></div>
+    <div class="fact"><div class="kicker">Sunset from the Pincio</div><div class="big">~16:40</div><div class="small">Sunday 20 December</div></div>
+  </section>
+
+  <div class="sec-head" id="plan">
+    <span class="num">i.</span>
+    <div><h3>The itinerary</h3><p>Choose a day, then click a stop to fly the map there.</p></div>
+  </div>
+
+  <section class="planner">
+    <div class="itin">
+      <div class="tabs" role="tablist" id="tabs"></div>
+      <div id="dayPanel" role="tabpanel"></div>
+    </div>
+    <div class="map-col">
+      <div class="map-frame"><div id="map" aria-label="3D map of Rome with a pin for every stop"></div></div>
+      <div class="map-cap">
+        <span>Map © <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a>, data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors</span>
+        <span><button type="button" id="fitDay">Show whole day</button> <button type="button" id="fitAll">All of Rome</button></span>
+      </div>
+    </div>
+  </section>
+
+  <p class="pull">“Trevi after ten, when the basin is free and the crowds have gone home.”<small>From the plan · Friday 18 December</small></p>
+
+  <div class="sec-head" id="places">
+    <span class="num">ii.</span>
+    <div><h3>The places</h3><p>A photo for every pin. Click one to see it on the map.</p></div>
+  </div>
+  <section class="gallery" id="gallery"></section>
+
+  <div class="sec-head" id="money">
+    <span class="num">iii.</span>
+    <div><h3>The money</h3><p>Costs per person against the €600 budget.</p></div>
+  </div>
+  <section class="budget">
+    <div>
+      <div class="kicker">Emergency buffer left</div>
+      <div class="hero-num"><span class="n" id="bufNum">€150</span><span class="l" id="bufLbl">of €600 each, after €405 of trip costs and €45 set aside</span></div>
+      <div class="stack" id="stack" role="img" aria-label="Stacked bar of the €600 budget per person"></div>
+      <div class="axis"><span>€0</span><span>€150</span><span>€300</span><span>€450</span><span>€600</span></div>
+      <ul class="legend" id="legend"></ul>
+      <details class="tbl" open>
+        <summary>Full cost table</summary>
+        <table class="costs" id="costTable"></table>
+      </details>
+    </div>
+    <aside class="whatif" aria-label="What-if budget controls">
+      <div class="kicker">What if…</div>
+      <h4>Watch the buffer move</h4>
+      <div class="range-row"><span>Return flight per person</span><b id="flightVal">€140</b></div>
+      <input type="range" id="flight" min="100" max="200" step="5" value="140" aria-label="Return flight price per person">
+      <div class="range-row"><span>€100</span><span>planned €140 · max €190</span><span>€200</span></div>
+      <label><input type="checkbox" id="student"> <span>We have student enrolment certificates (Vatican ticket €15, not €25)</span></label>
+      <label><input type="checkbox" id="parking"> <span>Off-airport parking at Larnaca (~€25 total instead of €50, so about €12 each back)</span></label>
+      <label><input type="checkbox" id="insure"> <span>Buy basic travel insurance (~€15 each, which the plan recommends)</span></label>
+      <div class="status" id="status"></div>
+    </aside>
+  </section>
+
+  <div class="sec-head">
+    <span class="num">iv.</span>
+    <div><h3>Before you go</h3><p>Good to know for the trip.</p></div>
+  </div>
+  <section class="tips">
+    <div><h5>Book in this order</h5>Flights and a hotel with free cancellation now. Then the Vatican 08:00 slot for Sat 19 Dec. Then the Colosseum about 20 Nov (sales open 30 days ahead) and the Pantheon about 21 Nov.</div>
+    <div><h5>Carry your ID</h5>Your Cypriot ID card unlocks the €4 Colosseum and €2 Pantheon prices. It's checked at the gate, and tickets must match your name exactly.</div>
+    <div><h5>Getting around</h5>Mostly on foot, 15–30 minutes between sights. Tap your own contactless card at the metro gates: €1.50 for 100 minutes.</div>
+    <div><h5>Eat like a local</h5>Supplì, pizza al taglio, a trapizzino, roasted chestnuts at Navona. Eat a street or two back from the big squares, and watch for the <i>coperto</i> cover charge.</div>
+    <div><h5>Pack for December</h5>12–14 °C by day and 3–5 °C at night. Bring layers, a waterproof jacket, waterproof shoes for about 15 km a day, a scarf for churches and an EU plug adapter.</div>
+    <div><h5>Skip the scams</h5>Friendship bracelets, costumed "gladiators", Trevi "ticket" touts and unofficial taxis. The official white taxi costs €55 fixed. Keep your phone in a front pocket on Metro A.</div>
+  </section>
+
+  <div class="sec-head" id="credits">
+    <span class="num">v.</span>
+    <div><h3>Photo credits</h3><p>All photos come from Wikimedia Commons and are loaded from it. Some show the type of food rather than the exact shop; these are marked “illustrative”.</p></div>
+  </div>
+  <ul class="credits" id="creditList"></ul>
+
+  <footer>
+    <span>Plan, prices and times from <i>report2.md</i> (checked 28 Sep 2026). Prices marked as estimates may change.</span>
+    <span>Have a wonderful trip · Buon viaggio</span>
+  </footer>
+</div>
+</main>
+
+<div class="tip" id="tip" role="tooltip"></div>
+
+<script>
+/* ---------- data ---------- */
+const C = "https://thumb.wikimedia.org/wikipedia/commons/thumb/";
+const W = "https://commons.wikimedia.org/wiki/File:";
+const P = {
+  fco:        { name: "Fiumicino Airport (T3)", ll: [12.2462, 41.7999], blurb: "Land at 17:00 on Friday and fly out at 18:10 on Monday. The Terravision bus to Termini takes about 55 minutes.",
+                img: C+"a/a1/Rome_Fiumicino_Leonardo_da_Vinci_International_Airport%2C_Aeroporto_internazionale_di_Roma-Fiumicino_%22Leonardo_da_Vinci%22.jpg/960px-Rome_Fiumicino_Leonardo_da_Vinci_International_Airport%2C_Aeroporto_internazionale_di_Roma-Fiumicino_%22Leonardo_da_Vinci%22.jpg",
+                page: W+"Rome_Fiumicino_Leonardo_da_Vinci_International_Airport,_Aeroporto_internazionale_di_Roma-Fiumicino_%22Leonardo_da_Vinci%22.jpg", by: "Apaleutos25", lic: "CC BY-SA 4.0" },
+  hotel:      { name: "Roma Resort Termini", ll: [12.5010, 41.9012], blurb: "Home base for three nights, a 5-minute walk from Termini station. The pin marks the station area.",
+                img: C+"8/85/Roma_termini_01.jpg/960px-Roma_termini_01.jpg", page: W+"Roma_termini_01.jpg", by: "Hide1228", lic: "CC BY-SA 4.0", note: "Photo: Roma Termini station, next to the hotel" },
+  mercato:    { name: "Mercato Centrale", ll: [12.5038, 41.8986], blurb: "Food hall inside Termini with a Trapizzino stall and pizza counters. Dinner for about €12–15.",
+                img: C+"f/f1/Trapizzino_-_Pollo_alla_Cacciatora.jpg/960px-Trapizzino_-_Pollo_alla_Cacciatora.jpg", page: W+"Trapizzino_-_Pollo_alla_Cacciatora.jpg", by: "Diego Zitelli", lic: "CC BY 3.0", note: "Illustrative: a trapizzino, not photographed at Mercato Centrale" },
+  quirinale:  { name: "Piazza del Quirinale", ll: [12.4871, 41.8996], blurb: "The President's palace and an obelisk on the way down from Via Nazionale.",
+                img: C+"6/60/20160422_032_Roma_-_Piazza_del_Quirinale_-_Obelisco_del_Quirinale_%2826589815302%29.jpg/960px-20160422_032_Roma_-_Piazza_del_Quirinale_-_Obelisco_del_Quirinale_%2826589815302%29.jpg",
+                page: W+"20160422_032_Roma_-_Piazza_del_Quirinale_-_Obelisco_del_Quirinale_(26589815302).jpg", by: "Sjaak Kempe from Groningen, The Netherlands", lic: "CC BY 2.0" },
+  trevi:      { name: "Trevi Fountain", ll: [12.4833, 41.9009], blurb: "Free to reach the basin after 22:00, when most of the crowd has left. Don't forget to throw a coin.",
+                img: C+"c/c7/Trevi_Fountain_-_Roma.jpg/960px-Trevi_Fountain_-_Roma.jpg", page: W+"Trevi_Fountain_-_Roma.jpg", by: "NikonZ7II", lic: "CC BY-SA 4.0" },
+  corso:      { name: "Via del Corso", ll: [12.4808, 41.9027], blurb: "Rome's main shopping street, strung with Christmas lights.",
+                img: C+"0/0b/Via_del_Corso_%2852501354470%29.jpg/960px-Via_del_Corso_%2852501354470%29.jpg", page: W+"Via_del_Corso_(52501354470).jpg", by: "Adam Lusch", lic: "CC BY-SA 2.0" },
+  pantheon:   { name: "Pantheon", ll: [12.4768, 41.8986], blurb: "Lit up from outside on Friday night, then inside on Monday at 10:00 on a €2 timed ticket.",
+                img: C+"7/7b/Pantheon_%28Rome%29_-_Right_side_and_front.jpg/960px-Pantheon_%28Rome%29_-_Right_side_and_front.jpg", page: W+"Pantheon_(Rome)_-_Right_side_and_front.jpg", by: "NikonZ7II", lic: "CC BY-SA 4.0" },
+  navona:     { name: "Piazza Navona Christmas market", ll: [12.4731, 41.8992], blurb: "Mercatino della Befana: nativity stalls, sweets, roasted chestnuts and a carousel, open until about 01:00.",
+                img: C+"0/08/Piazza_Navona_%28Rome%29_at_night.jpg/960px-Piazza_Navona_%28Rome%29_at_night.jpg", page: W+"Piazza_Navona_(Rome)_at_night.jpg", by: "NikonZ7II", lic: "CC BY-SA 4.0" },
+  vatican:    { name: "Vatican Museums & Sistine Chapel", ll: [12.4536, 41.9065], blurb: "First slot at 08:00. Allow 3–3.5 hours. €25 (€15 with a student enrolment certificate). Closed on Sunday.",
+                img: C+"5/5b/Vatican_Museums_Spiral_Staircase_2012.jpg/960px-Vatican_Museums_Spiral_Staircase_2012.jpg", page: W+"Vatican_Museums_Spiral_Staircase_2012.jpg", by: "Colin", lic: "CC BY-SA 3.0" },
+  pizzarium:  { name: "Pizzarium (Gabriele Bonci)", ll: [12.4467, 41.9067], blurb: "The famous pizza al taglio shop, sold by weight. About €8–10, 5 minutes from the museum exit.",
+                img: C+"a/ab/Pizzarium_pizza_slices.jpg/960px-Pizzarium_pizza_slices.jpg", page: W+"Pizzarium_pizza_slices.jpg", by: "JIP", lic: "CC BY-SA 4.0", note: "Illustrative: pizza slices (Commons file “Pizzarium pizza slices”)" },
+  stpeters:   { name: "St Peter's Basilica", ll: [12.4539, 41.9022], blurb: "Free entry. Cover shoulders and knees. The Christmas tree and nativity scene are in the square.",
+                img: C+"f/f5/Basilica_di_San_Pietro_in_Vaticano_September_2015-1a.jpg/960px-Basilica_di_San_Pietro_in_Vaticano_September_2015-1a.jpg", page: W+"Basilica_di_San_Pietro_in_Vaticano_September_2015-1a.jpg", by: "Alvesgaspar", lic: "CC BY-SA 4.0" },
+  conciliazione: { name: "Via della Conciliazione", ll: [12.4605, 41.9021], blurb: "The long avenue from St Peter's to the Tiber.",
+                img: C+"3/34/Roma-_Via_della_Conciliazione_-_52365342202.jpg/960px-Roma-_Via_della_Conciliazione_-_52365342202.jpg", page: W+"Roma-_Via_della_Conciliazione_-_52365342202.jpg", by: "Jorge Franganillo", lic: "CC BY 2.0" },
+  castel:     { name: "Castel Sant'Angelo", ll: [12.4663, 41.9031], blurb: "Hadrian's tomb, later a papal fortress. Seen from outside on this walk.",
+                img: C+"5/57/Castel_Sant%27Angelo_at_Night.jpg/960px-Castel_Sant%27Angelo_at_Night.jpg", page: W+"Castel_Sant%27Angelo_at_Night.jpg", by: "Livioandronico2013", lic: "CC BY-SA 4.0" },
+  ponte:      { name: "Ponte Sant'Angelo", ll: [12.4667, 41.9016], blurb: "Bernini's bridge of angels over the Tiber.",
+                img: C+"8/84/Sant%27Angelo_bridge%2C_dusk%2C_Rome%2C_Italy.jpg/960px-Sant%27Angelo_bridge%2C_dusk%2C_Rome%2C_Italy.jpg", page: W+"Sant%27Angelo_bridge,_dusk,_Rome,_Italy.jpg", by: "Jebulon", lic: "CC0" },
+  campo:      { name: "Campo de' Fiori", ll: [12.4722, 41.8956], blurb: "Market square with Giordano Bruno's statue in the middle.",
+                img: C+"3/37/Campo_dei_Fiori.jpg/960px-Campo_dei_Fiori.jpg", page: W+"Campo_dei_Fiori.jpg", by: "Myrabella", lic: "CC BY-SA 3.0" },
+  trastevere: { name: "Trastevere", ll: [12.4700, 41.8894], blurb: "Cobbled lanes across the Tiber. Supplì, a trapizzino, then cheap pizza or pasta for about €15.",
+                img: C+"d/de/Santa_Maria_in_Trastevere_fountain.jpg/960px-Santa_Maria_in_Trastevere_fountain.jpg", page: W+"Santa_Maria_in_Trastevere_fountain.jpg", by: "Jensens", lic: "Public domain" },
+  suppli:     { name: "Supplì Roma", ll: [12.4708, 41.8877], blurb: "On Via di San Francesco a Ripa: fried rice balls with a molten mozzarella centre.",
+                img: C+"a/a9/Suppl%C3%AC.jpg/960px-Suppl%C3%AC.jpg", page: W+"Suppl%C3%AC.jpg", by: "FrederikBianko", lic: "CC BY-SA 3.0", note: "Illustrative: supplì, not photographed at this shop" },
+  venezia:    { name: "Piazza Venezia", ll: [12.4826, 41.8960], blurb: "The Vittoriano and Rome's big Christmas tree.",
+                img: C+"a/a2/Piazza_Venezia_-_Il_Vittoriano.jpg/960px-Piazza_Venezia_-_Il_Vittoriano.jpg", page: W+"Piazza_Venezia_-_Il_Vittoriano.jpg", by: "Paolo Costa Baldi", lic: "CC BY-SA 3.0" },
+  colosseum:  { name: "Colosseum", ll: [12.4922, 41.8902], blurb: "09:00 entry on the €4 EU 18–25 ticket, which also covers the Forum and Palatine for 24 hours.",
+                img: C+"d/de/Colosseo_2020.jpg/960px-Colosseo_2020.jpg", page: W+"Colosseo_2020.jpg", by: "FeaturedPics", lic: "CC BY-SA 4.0" },
+  forum:      { name: "Roman Forum", ll: [12.4853, 41.8925], blurb: "The heart of ancient Rome. Included in the Colosseum ticket.",
+                img: C+"f/fe/Foro_Romano_visto_dal_Vittoriano_Roma.jpg/960px-Foro_Romano_visto_dal_Vittoriano_Roma.jpg", page: W+"Foro_Romano_visto_dal_Vittoriano_Roma.jpg", by: "Wolfgang Moroder", lic: "CC BY-SA 3.0" },
+  palatine:   { name: "Palatine Hill", ll: [12.4875, 41.8894], blurb: "Where emperors lived, with views over the Circus Maximus. Same ticket.",
+                img: C+"6/62/Palatine_Hill_from_across_the_Circus_Maximus_April_2019.jpg/960px-Palatine_Hill_from_across_the_Circus_Maximus_April_2019.jpg", page: W+"Palatine_Hill_from_across_the_Circus_Maximus_April_2019.jpg", by: "Lil Herodotus", lic: "CC BY-SA 4.0" },
+  monti:      { name: "Monti & Mercato Monti", ll: [12.4928, 41.8947], blurb: "Lunch for about €8–10, and the Christmas edition of the vintage market at Via Leonina 46.",
+                img: C+"6/65/Rione_I_Monti%2C_Roma%2C_Italy_-_panoramio_%2825%29.jpg/960px-Rione_I_Monti%2C_Roma%2C_Italy_-_panoramio_%2825%29.jpg", page: W+"Rione_I_Monti,_Roma,_Italy_-_panoramio_(25).jpg", by: "Vadim Zhivotovsky", lic: "CC BY 3.0", note: "Photo: a street in Rione Monti" },
+  capitoline: { name: "Capitoline Hill", ll: [12.4826, 41.8934], blurb: "Michelangelo's piazza, and a viewpoint over the Forum.",
+                img: C+"3/36/Piazza_del_Campidoglio_2015.jpg/960px-Piazza_del_Campidoglio_2015.jpg", page: W+"Piazza_del_Campidoglio_2015.jpg", by: "Kameister", lic: "CC BY-SA 4.0" },
+  spanish:    { name: "Spanish Steps", ll: [12.4823, 41.9059], blurb: "135 steps up to Trinità dei Monti.",
+                img: C+"b/b8/Piazza_di_Spagna_%28Rome%29_0004.jpg/960px-Piazza_di_Spagna_%28Rome%29_0004.jpg", page: W+"Piazza_di_Spagna_(Rome)_0004.jpg", by: "Arnaud 25", lic: "CC BY-SA 3.0" },
+  condotti:   { name: "Via Condotti lights", ll: [12.4802, 41.9052], blurb: "Luxury window displays under the Christmas lights. Free to look.",
+                img: C+"f/fd/Dolce_%26_Gabbana%2C_Via_dei_Condotti_%2846129645824%29.jpg/960px-Dolce_%26_Gabbana%2C_Via_dei_Condotti_%2846129645824%29.jpg", page: W+"Dolce_%26_Gabbana,_Via_dei_Condotti_(46129645824).jpg", by: "Sonse", lic: "CC BY 2.0" },
+  pincio:     { name: "Pincio Terrace", ll: [12.4790, 41.9112], blurb: "Sunset over the domes at about 16:40.",
+                img: C+"6/6d/Terrazza_del_Pincio_%2846397854832%29.jpg/960px-Terrazza_del_Pincio_%2846397854832%29.jpg", page: W+"Terrazza_del_Pincio_(46397854832).jpg", by: "Sonse", lic: "CC BY 2.0" },
+  popolo:     { name: "Piazza del Popolo", ll: [12.4764, 41.9108], blurb: "Twin churches and an obelisk at the north gate of the old city.",
+                img: C+"6/6c/Piazza_del_Popolo%2C_Roma_%28Rome%29.jpg/960px-Piazza_del_Popolo%2C_Roma_%28Rome%29.jpg", page: W+"Piazza_del_Popolo,_Roma_(Rome).jpg", by: "Apaleutos25", lic: "CC BY-SA 4.0" },
+  forno:      { name: "Forno Campo de' Fiori", ll: [12.4715, 41.8958], blurb: "Pizza bianca or rossa and supplì for about €6–8. The last lunch.",
+                img: C+"f/f8/Pizza_by_the_slice_in_Roma%2C_Italy.jpg/960px-Pizza_by_the_slice_in_Roma%2C_Italy.jpg", page: W+"Pizza_by_the_slice_in_Roma,_Italy.jpg", by: "Jon Gudorf Photography", lic: "CC BY-SA 2.0", note: "Illustrative: Roman pizza by the slice, not photographed at this bakery" }
+};
+const LIC = {
+  "CC BY-SA 4.0": "https://creativecommons.org/licenses/by-sa/4.0", "CC BY-SA 3.0": "https://creativecommons.org/licenses/by-sa/3.0",
+  "CC BY-SA 2.0": "https://creativecommons.org/licenses/by-sa/2.0", "CC BY 3.0": "https://creativecommons.org/licenses/by/3.0",
+  "CC BY 2.0": "https://creativecommons.org/licenses/by/2.0", "CC0": "https://creativecommons.org/publicdomain/zero/1.0/"
+};
+
+// t = time, soft = approximate/sequence, p = place id (null = not in Rome)
+const DAYS = [
+  { key: "d1", dow: "Fri", date: "18 Dec", title: "Arrival and <i>the Christmas-lights walk</i>", sub: "A late night · about 5 km on foot · nothing to book",
+    intro: "Land in the dark, drop your bags and head straight out. Rome looks its best at night in December, and Trevi is yours for free after ten.",
+    stops: [
+      { t: "12:30", p: null, n: "Larnaca Airport", d: "Park and check in. Cyprus time." },
+      { t: "14:40", p: null, n: "CY340 takes off", d: "Economy Basic: 10 kg cabin bag and personal item included." },
+      { t: "17:00", p: "fco", d: "Land at T3. Rome is 1 hour behind Cyprus." },
+      { t: "~17:45", p: "hotel", d: "Terravision bus to Termini (~19:00), then a 5-minute walk to check in.", soft: true },
+      { t: "19:30", p: "mercato", d: "Dinner in the Termini food hall, about €12–15." },
+      { t: "21:00", p: "quirinale", d: "Start the night walk along Via Nazionale." },
+      { t: "22:00+", p: "trevi", d: "Basin access is free after 22:00.", cost: "Free", soft: true },
+      { t: "then", p: "corso", d: "Walk under the Christmas lights.", soft: true },
+      { t: "then", p: "pantheon", d: "See it lit up from outside.", soft: true },
+      { t: "then", p: "navona", d: "Christmas market, open until about 01:00. About 30 minutes' walk back to the hotel.", soft: true }
+    ] },
+  { key: "d2", dow: "Sat", date: "19 Dec", title: "The Vatican <i>and Trastevere</i>", sub: "Early start · your only Vatican day · ~3 km afternoon walk",
+    intro: "Be first through the doors at eight and see the Sistine Chapel before the crowds arrive. Then pizza by weight, Michelangelo's dome and supper across the river.",
+    stops: [
+      { t: "07:30", p: "hotel", d: "Supermarket breakfast in your room, then Metro A Termini → Ottaviano (€1.50)." },
+      { t: "08:00", p: "vatican", d: "Book the first slot. Allow 3–3.5 hours.", cost: "€25" },
+      { t: "12:00", p: "pizzarium", d: "Pizza al taglio sold by weight, about €8–10." },
+      { t: "13:30", p: "stpeters", d: "Free. Optional dome climb (€10–22) from the buffer.", cost: "Free" },
+      { t: "15:30", p: "conciliazione", d: "Walk from St Peter's towards the river." },
+      { t: "then", p: "castel", d: "See it from outside.", soft: true },
+      { t: "then", p: "ponte", d: "Cross Bernini's bridge of angels.", soft: true },
+      { t: "then", p: "campo", d: "Then cross the Tiber to Trastevere.", soft: true },
+      { t: "18:30", p: "trastevere", d: "Dinner and street food, about €15." },
+      { t: "then", p: "suppli", d: "Supplì to start.", soft: true },
+      { t: "21:00", p: "venezia", d: "Tram 8 to Piazza Venezia, then walk or bus back (€1.50)." }
+    ] },
+  { key: "d3", dow: "Sun", date: "20 Dec", title: "Ancient Rome <i>to the Spanish Steps</i>", sub: "Early-ish start · Colosseum at 09:00 · sunset from the Pincio",
+    intro: "Two thousand years of history before lunch, then a long walk under the lights to see the sun set over the domes.",
+    stops: [
+      { t: "09:00", p: "colosseum", d: "EU 18–25 reduced ticket. About a 20-minute walk from the hotel along Via Cavour.", cost: "€4" },
+      { t: "then", p: "forum", d: "Same 24-hour ticket.", soft: true },
+      { t: "then", p: "palatine", d: "Same 24-hour ticket.", soft: true },
+      { t: "13:00", p: "monti", d: "Pizza al taglio or a panino. Check whether the Christmas Mercato Monti is on." },
+      { t: "14:30", p: "capitoline", d: "Viewpoint over the Forum." },
+      { t: "then", p: "venezia", d: "See the Christmas tree.", soft: true },
+      { t: "then", p: "corso", d: "Walk north along the Corso.", soft: true },
+      { t: "then", p: "spanish", d: "Climb the steps.", soft: true },
+      { t: "then", p: "condotti", d: "See the Via Condotti lights.", soft: true },
+      { t: "~16:40", p: "pincio", d: "Sunset over Rome.", soft: true },
+      { t: "then", p: "popolo", d: "Walk down to the piazza.", soft: true },
+      { t: "18:30", p: "hotel", d: "Metro A Flaminio → Termini. Pizzeria or trattoria near the hotel, about €15. Then an early night." }
+    ] },
+  { key: "d4", dow: "Mon", date: "21 Dec", title: "The Pantheon <i>and a last slice</i>", sub: "Relaxed start · souvenirs · fly home in the evening",
+    intro: "A slow last morning: Hadrian's dome, an espresso standing at the bar, presents for home and one more look at the market.",
+    stops: [
+      { t: "09:00", p: "hotel", d: "Check out and leave your bags. Walk about 25 minutes to the centre." },
+      { t: "10:00", p: "pantheon", d: "Timed EU 18–25 ticket. Then an espresso at the bar and the souvenir run.", cost: "€2" },
+      { t: "12:00", p: "forno", d: "Pizza bianca or rossa, about €6–8." },
+      { t: "then", p: "navona", d: "A last look at the market in daylight.", soft: true },
+      { t: "14:00", p: "hotel", d: "Pick up your bags. Terravision to the airport at about 14:45 (allow an hour)." },
+      { t: "18:10", p: "fco", d: "CY341 departs and lands in Larnaca at 22:10, Cyprus time. Pick up the car." }
+    ] }
+];
+
+// spending in € per person (from the plan's cost table)
+const COSTS = [
+  { k: "Flights", v: 140, c: "var(--s1)", rows: [["Cyprus Airways return, Economy Basic incl. 10 kg cabin bag", 140, "Estimate (max to keep full buffer)"], ["Seat selection", 0, "Skipped"]] },
+  { k: "Hotel & city tax", v: 123, c: "var(--s2)", rows: [["Hotel, 3 nights (~€70/night ÷ 2)", 105, "Estimate"], ["Rome city tax (€6 × 3 nights, 3★)", 18, "Rate-based"]] },
+  { k: "Getting around", v: 19, c: "var(--s3)", rows: [["Terravision return, Fiumicino ↔ Termini", 13, "Published fare"], ["Metro & bus (≈4 rides × €1.50)", 6, "Published fare"]] },
+  { k: "Tickets", v: 31, c: "var(--s4)", rows: [["Vatican Museums", 25, "Published"], ["Colosseum, Forum & Palatine (EU 18–25)", 4, "Published"], ["Pantheon (EU 18–25)", 2, "Published"], ["Trevi basin (after 22:00) & St Peter's", 0, "Free"]] },
+  { k: "Food & extras", v: 92, c: "var(--s5)", rows: [["Food: breakfasts, lunches, dinners, snacks", 90, "Estimate"], ["Small extras (church-lighting coins, toilets)", 2, "Estimate"]] },
+  { k: "Set-asides", v: 45, c: "var(--s6)", rows: [["Souvenirs", 20, "Fixed"], ["Larnaca parking (€50 ÷ 2)", 25, "Fixed"]] }
+];
+
+/* ---------- theme ---------- */
+(function () {
+  const btn = document.getElementById("themeBtn");
+  let saved = null; try { saved = localStorage.getItem("rome-theme"); } catch (e) {}
+  if (saved) document.documentElement.dataset.theme = saved;
+  btn.addEventListener("click", () => {
+    const cur = document.documentElement.dataset.theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    const next = cur === "dark" ? "light" : "dark";
+    document.documentElement.dataset.theme = next;
+    try { localStorage.setItem("rome-theme", next); } catch (e) {}
+  });
+})();
+
+/* ---------- hero + countdown ---------- */
+const heroP = P.trevi;
+document.getElementById("heroImg").style.backgroundImage = `url("${heroP.img}")`;
+document.getElementById("heroCap").innerHTML = `Trevi Fountain · <a href="${heroP.page}" target="_blank" rel="noopener">${heroP.by}</a>, ${heroP.lic}`;
+
+const FLIGHT = new Date("2026-12-18T14:40:00+02:00"); // CY340, Larnaca local time
+function tick() {
+  let ms = FLIGHT - Date.now();
+  const ids = ["cdD", "cdH", "cdM", "cdS"];
+  if (ms <= 0) { ids.forEach(id => document.getElementById(id).textContent = "0"); document.querySelector(".countdown .kicker").textContent = "Buon viaggio — you're on your way"; return; }
+  const s = Math.floor(ms / 1000);
+  const v = [Math.floor(s / 86400), Math.floor(s % 86400 / 3600), Math.floor(s % 3600 / 60), s % 60];
+  v.forEach((x, i) => document.getElementById(ids[i]).textContent = i === 0 ? x : String(x).padStart(2, "0"));
+}
+tick(); setInterval(tick, 1000);
+
+/* ---------- map ---------- */
+const DAYCOL = () => { const cs = getComputedStyle(document.documentElement); return Object.fromEntries(DAYS.map(d => [d.key, cs.getPropertyValue("--" + d.key).trim()])); };
+const placeDays = {};
+DAYS.forEach(d => d.stops.forEach(s => { if (s.p) (placeDays[s.p] ||= new Set()).add(d.key); }));
+
+const map = new maplibregl.Map({
+  container: "map",
+  style: "https://tiles.openfreemap.org/styles/liberty",
+  center: [12.4823, 41.8985], zoom: 14.2, pitch: 60, bearing: -17, maxPitch: 75,
+  attributionControl: { compact: true }
+});
+map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-right");
+
+const markers = {};
+const popup = new maplibregl.Popup({ offset: 30, maxWidth: "300px", closeOnClick: true });
+function popHTML(id) {
+  const p = P[id];
+  return `<div class="pop"><img src="${p.img}" alt="${p.name}" onerror="this.style.display='none'"><div class="pb">
+    <div class="pk">${[...(placeDays[id] || [])].map(k => DAYS.find(d => d.key === k)).map(d => d.dow + " " + d.date).join(" · ")}</div>
+    <h4>${p.name}</h4><p>${p.blurb}</p>
+    <div class="cr">${p.note ? p.note + " · " : ""}Photo: ${p.by}, ${p.lic}</div></div></div>`;
+}
+function buildMarkers() {
+  const cols = DAYCOL();
+  Object.keys(P).forEach(id => {
+    const el = document.createElement("div");
+    el.className = "pin";
+    el.innerHTML = "<span></span>";
+    el.title = P[id].name;
+    el.setAttribute("role", "button");
+    el.setAttribute("aria-label", P[id].name);
+    el.addEventListener("click", e => { e.stopPropagation(); focusPlace(id, true); });
+    markers[id] = new maplibregl.Marker({ element: el, anchor: "bottom" }).setLngLat(P[id].ll).addTo(map);
+    const first = [...placeDays[id]][0];
+    el.style.setProperty("--pc", cols[first]);
+  });
+}
+buildMarkers();
+
+map.on("load", () => {
+  map.addSource("route", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+  map.addLayer({ id: "route-casing", type: "line", source: "route", paint: { "line-color": "#ffffff", "line-width": 7, "line-opacity": .85 }, layout: { "line-cap": "round", "line-join": "round" } });
+  map.addLayer({ id: "route", type: "line", source: "route", paint: { "line-color": "#a6362a", "line-width": 3.5, "line-dasharray": [1.5, 1.2] }, layout: { "line-cap": "round", "line-join": "round" } });
+  // warm the 3D buildings to look like Roman stone
+  if (map.getLayer("building-3d")) {
+    map.setPaintProperty("building-3d", "fill-extrusion-color", ["interpolate", ["linear"], ["get", "render_height"], 0, "#e9d9bf", 30, "#dcc29b", 80, "#cfae80"]);
+    map.setPaintProperty("building-3d", "fill-extrusion-opacity", .92);
+  }
+  showDay(current, false);
+});
+
+/* ---------- itinerary ---------- */
+let current = 0, activePlace = null;
+const tabsEl = document.getElementById("tabs"), panel = document.getElementById("dayPanel");
+DAYS.forEach((d, i) => {
+  const b = document.createElement("button");
+  b.className = "tab"; b.type = "button"; b.setAttribute("role", "tab"); b.id = "tab-" + d.key;
+  b.innerHTML = `<span class="t-day">Day ${i + 1} · ${d.dow}</span><span class="t-date">${d.date}</span>`;
+  b.addEventListener("click", () => showDay(i, true));
+  b.addEventListener("keydown", e => {
+    if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+      const n = (i + (e.key === "ArrowRight" ? 1 : DAYS.length - 1)) % DAYS.length;
+      showDay(n, true); document.getElementById("tab-" + DAYS[n].key).focus();
+    }
+  });
+  tabsEl.appendChild(b);
+});
+
+function showDay(i, fly) {
+  current = i; activePlace = null;
+  const d = DAYS[i], cols = DAYCOL();
+  document.documentElement.style.setProperty("--dc", cols[d.key]);
+  [...tabsEl.children].forEach((t, j) => { t.setAttribute("aria-selected", j === i); t.tabIndex = j === i ? 0 : -1; t.style.setProperty("--dc", cols[DAYS[j].key]); });
+  panel.setAttribute("aria-labelledby", "tab-" + d.key);
+  let n = 0;
+  panel.innerHTML = `<h4 class="day-title">${d.title}</h4><p class="day-sub">${d.dow} ${d.date} 2026 · ${d.sub}</p><p class="day-intro">${d.intro}</p>
+    <ol class="stops">${d.stops.map((s, k) => {
+      if (!s.p) return `<li class="stop nopin"><span class="time">${s.t}</span><span class="dot"></span><div class="stop-btn"><span><span class="stop-name">${s.n}</span><span class="stop-note">${s.d}</span><span class="stop-meta" style="color:var(--ink-3)">Larnaca · not on the map</span></span></div></li>`;
+      const p = P[s.p]; n++;
+      return `<li class="stop" data-p="${s.p}" data-k="${k}"><span class="time ${s.soft ? "soft" : ""}">${s.t}</span><span class="dot"></span>
+        <button class="stop-btn" type="button" aria-label="Show ${p.name} on the map"><img class="thumb" src="${p.img}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
+        <span><span class="stop-name">${p.name}</span><span class="stop-note">${s.d}</span>${s.cost ? `<span class="stop-meta">${s.cost}</span>` : ""}</span></button></li>`;
+    }).join("")}</ol>`;
+  panel.querySelectorAll(".stop[data-p] .stop-btn").forEach(b => b.addEventListener("click", () => {
+    const li = b.closest(".stop");
+    panel.querySelectorAll(".stop").forEach(x => x.classList.toggle("active", x === li));
+    focusPlace(li.dataset.p, false);
+    if (matchMedia("(max-width: 980px)").matches) document.querySelector(".map-col").scrollIntoView({ behavior: "smooth", block: "start" });
+  }));
+  // pins: colour & dim by day
+  Object.entries(markers).forEach(([id, m]) => {
+    const el = m.getElement(), on = placeDays[id].has(d.key);
+    el.classList.toggle("dim", !on); el.classList.remove("on");
+    el.style.setProperty("--pc", on ? cols[d.key] : cols[[...placeDays[id]][0]]);
+    el.style.zIndex = on ? 2 : 1;
+  });
+  // numbered pins in visiting order (first appearance in the day)
+  Object.values(markers).forEach(m => m.getElement().querySelector("span").textContent = "");
+  const order = [];
+  d.stops.forEach(s => { if (s.p && !order.includes(s.p)) order.push(s.p); });
+  order.forEach((id, k) => markers[id].getElement().querySelector("span").textContent = k + 1);
+  // route line (skip the airport leg so the city stays in frame)
+  const pts = d.stops.filter(s => s.p && s.p !== "fco").map(s => P[s.p].ll);
+  if (map.getSource("route")) {
+    map.getSource("route").setData({ type: "Feature", geometry: { type: "LineString", coordinates: pts } });
+    map.setPaintProperty("route", "line-color", cols[d.key]);
+  }
+  popup.remove();
+  if (fly) fitDay();
+}
+
+function fitDay() {
+  const d = DAYS[current];
+  const ids = d.stops.filter(s => s.p && s.p !== "fco").map(s => s.p);
+  const b = new maplibregl.LngLatBounds();
+  ids.forEach(id => b.extend(P[id].ll));
+  map.fitBounds(b, { padding: { top: 80, bottom: 50, left: 50, right: 50 }, pitch: 55, bearing: -17, duration: 1600, maxZoom: 15.5 });
+}
+document.getElementById("fitDay").addEventListener("click", fitDay);
+document.getElementById("fitAll").addEventListener("click", () => {
+  const b = new maplibregl.LngLatBounds(); Object.entries(P).forEach(([k, p]) => { if (k !== "fco") b.extend(p.ll); });
+  map.fitBounds(b, { padding: 50, pitch: 50, bearing: -17, duration: 1600 });
+});
+
+function focusPlace(id, fromMap) {
+  activePlace = id;
+  Object.entries(markers).forEach(([k, m]) => m.getElement().classList.toggle("on", k === id));
+  const far = id === "fco";
+  map.flyTo({ center: P[id].ll, zoom: far ? 14 : 17, pitch: far ? 50 : 65, bearing: ((map.getBearing() + 30 + 540) % 360) - 180, speed: .9, curve: 1.5, essential: true });
+  popup.setLngLat(P[id].ll).setHTML(popHTML(id)).addTo(map);
+  if (fromMap) {
+    // switch to a day containing this place if needed, and highlight its row
+    const dayIdx = placeDays[id].has(DAYS[current].key) ? current : DAYS.findIndex(d => placeDays[id].has(d.key));
+    if (dayIdx !== current) { showDay(dayIdx, false); activePlace = id; markers[id].getElement().classList.add("on"); popup.setLngLat(P[id].ll).setHTML(popHTML(id)).addTo(map); }
+    const li = panel.querySelector(`.stop[data-p="${id}"]`);
+    panel.querySelectorAll(".stop").forEach(x => x.classList.toggle("active", x === li));
+  }
+}
+
+showDay(0, false);
+
+/* ---------- gallery ---------- */
+const gal = document.getElementById("gallery");
+Object.entries(P).forEach(([id, p]) => {
+  const days = [...placeDays[id]].map(k => DAYS.find(d => d.key === k)).map(d => d.dow).join(" & ");
+  const b = document.createElement("button");
+  b.className = "g-item"; b.type = "button";
+  b.innerHTML = `<img src="${p.img}" alt="${p.name}" loading="lazy" onerror="this.style.display='none'"><div class="gc"><b>${p.name}</b> · <span class="kicker" style="font-size:10px">${days}</span><br>${p.blurb}</div>`;
+  b.addEventListener("click", () => {
+    document.getElementById("plan").scrollIntoView({ behavior: "smooth" });
+    setTimeout(() => focusPlace(id, true), 500);
+  });
+  gal.appendChild(b);
+});
+
+/* ---------- credits ---------- */
+document.getElementById("creditList").innerHTML = Object.values(P).map(p =>
+  `<li><b>${p.name}</b>${p.note ? ` <i>(${p.note})</i>` : ""}: <a href="${p.page}" target="_blank" rel="noopener">${decodeURIComponent(p.page.split("File:")[1]).replace(/_/g, " ")}</a> by ${p.by}, ${LIC[p.lic] ? `<a href="${LIC[p.lic]}" target="_blank" rel="noopener">${p.lic}</a>` : p.lic}, via Wikimedia Commons</li>`
+).join("");
+
+/* ---------- budget ---------- */
+const tip = document.getElementById("tip");
+const els = { flight: document.getElementById("flight"), student: document.getElementById("student"), parking: document.getElementById("parking"), insure: document.getElementById("insure") };
+function budget() {
+  const f = +els.flight.value, vat = els.student.checked ? 15 : 25, park = els.parking.checked ? 13 : 25, ins = els.insure.checked ? 15 : 0;
+  const segs = COSTS.map(c => ({ ...c }));
+  segs[0].v = f; segs[0].rows = [["Cyprus Airways return, Economy Basic incl. 10 kg cabin bag", f, f === 140 ? "Estimate (max to keep full buffer)" : "What-if value"], ["Seat selection", 0, "Skipped"]];
+  segs[3].v = vat + 6; segs[3].rows = [["Vatican Museums" + (els.student.checked ? " (student certificate)" : ""), vat, "Published"], ["Colosseum, Forum & Palatine (EU 18–25)", 4, "Published"], ["Pantheon (EU 18–25)", 2, "Published"], ["Trevi basin (after 22:00) & St Peter's", 0, "Free"]];
+  segs[5].v = 20 + park; segs[5].rows = [["Souvenirs", 20, "Fixed"], ["Larnaca parking" + (els.parking.checked ? " (off-airport, ~€25 ÷ 2)" : " (€50 ÷ 2)"), park, els.parking.checked ? "Estimate" : "Fixed"]];
+  if (ins) { segs.push({ k: "Insurance", v: ins, c: "var(--ink-2)", rows: [["Basic travel insurance", ins, "Estimate (€10–20)"]] }); }
+  const spent = segs.reduce((a, s) => a + s.v, 0);
+  const buf = 600 - spent;
+  const trip = spent - segs[5].v - ins;
+
+  document.getElementById("flightVal").textContent = "€" + f;
+  const bn = document.getElementById("bufNum");
+  bn.textContent = (buf < 0 ? "−€" : "€") + Math.abs(buf);
+  document.getElementById("bufLbl").textContent = `of €600 each, after €${trip} of trip costs, €${segs[5].v} set aside${ins ? ` and €${ins} insurance` : ""}`;
+
+  const st = document.getElementById("status");
+  let lvl, col;
+  if (buf >= 150) { lvl = "Full buffer kept"; col = "var(--s6)"; }
+  else if (buf >= 100) { lvl = "Buffer above the €100 floor"; col = "var(--s4)"; }
+  else { lvl = "Below the €100 floor"; col = "var(--accent)"; }
+  st.style.setProperty("--st", col);
+  st.innerHTML = `<b>${buf >= 100 ? "✓" : "!"} ${lvl}</b><br>${f > 190 ? "The plan says not to pay more than €190 per person for the flight." : f > 140 ? `Every €10 above €140 comes out of the buffer.` : "At or under the planned €140 fare."}`;
+
+  const stack = document.getElementById("stack");
+  const all = [...segs, { k: "Buffer", v: Math.max(buf, 0), buf: true, rows: [] }];
+  stack.innerHTML = all.map(s => `<div class="seg ${s.buf ? "buf" : ""}" tabindex="0" style="flex:0 0 calc(${s.v / 600 * 100}% - 2px);${s.buf ? "" : `background:${s.c}`}" data-k="${s.k}" data-v="${s.v}"></div>`).join("");
+  stack.querySelectorAll(".seg").forEach(el => {
+    const show = e => {
+      const s = all.find(x => x.k === el.dataset.k);
+      tip.innerHTML = `<b>${s.k}: €${s.v}</b> · ${Math.round(s.v / 6)}% of €600${s.rows.length ? "<br>" + s.rows.filter(r => r[1]).map(r => `${r[0]}: €${r[1]}`).join("<br>") : "<br>Kept for emergencies"}`;
+      const r = el.getBoundingClientRect(), x = e && e.clientX ? e.clientX : r.left + r.width / 2;
+      tip.style.left = Math.min(x + 12, innerWidth - 270) + "px"; tip.style.top = (r.top - 12 - tip.offsetHeight) + "px"; tip.style.opacity = 1;
+    };
+    el.addEventListener("mousemove", show); el.addEventListener("focus", () => show());
+    el.addEventListener("mouseleave", () => tip.style.opacity = 0); el.addEventListener("blur", () => tip.style.opacity = 0);
+  });
+  document.getElementById("legend").innerHTML = all.map(s => `<li><span class="sw" style="${s.buf ? "background:repeating-linear-gradient(45deg,var(--buffer) 0 2px,transparent 2px 5px);box-shadow:inset 0 0 0 1.5px var(--buffer)" : `background:${s.c}`}"></span>${s.k}<span class="v">€${s.v}</span></li>`).join("");
+
+  document.getElementById("costTable").innerHTML = `<thead><tr><th>Item</th><th class="r">€ pp</th><th>Status</th></tr></thead><tbody>` +
+    segs.map(s => s.rows.map(r => `<tr><td>${r[0]}</td><td class="r">${r[1]}</td><td class="st">${r[2]}</td></tr>`).join("")).join("") +
+    `<tr class="tot"><td>Emergency buffer</td><td class="r">${buf}</td><td class="st">${buf >= 150 ? "Full buffer kept" : buf >= 100 ? "Above €100 floor" : "Below floor"}</td></tr>
+     <tr class="tot"><td>Total</td><td class="r">600</td><td class="st">≤ €600 ✔</td></tr></tbody>`;
+}
+Object.values(els).forEach(e => e.addEventListener("input", budget));
+budget();
+
+// recolour pins & route when the theme flips
+const mo = new MutationObserver(() => showDay(current, false));
+mo.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => showDay(current, false));
+</script>
+</body>
+</html>
