@@ -132,6 +132,10 @@ img { display: block; max-width: 100%; }
 .stop-meta { font-family: var(--sans); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--dc); margin-top: 5px; display: inline-block; font-weight: 700; }
 .stop.nopin .stop-btn { grid-template-columns: 1fr; cursor: default; }
 .stop.nopin .stop-btn:hover { background: none; border-color: transparent; }
+.leg { display: grid; grid-template-columns: 56px 18px 1fr; gap: 0 8px; margin: -2px 0 2px; }
+.leg .lt { grid-column: 3; padding: 0 8px; font-family: var(--sans); font-size: 12px; font-weight: 600; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.leg.transit .lt { color: var(--ink-2); }
+.leg-tag { font-family: var(--sans); font-size: 11px; font-weight: 700; background: #fffdf8; color: #1d1a16; border: 1.5px solid var(--lc); border-radius: 99px; padding: 1px 7px; white-space: nowrap; box-shadow: 0 1px 4px rgba(0,0,0,.25); pointer-events: none; }
 
 .map-col { position: sticky; top: 16px; }
 .map-frame { border: 1px solid var(--ink); background: var(--paper-2); padding: 8px; }
@@ -226,7 +230,7 @@ footer { margin-top: 50px; border-top: 3px double var(--ink); padding: 18px 0 40
   .wrap { padding: 0 16px; }
   .masthead .bar span:nth-child(2) { display: none; }
   .tab .t-date { font-size: 17px; }
-  .stop { grid-template-columns: 44px 16px 1fr; }
+  .stop, .leg { grid-template-columns: 44px 16px 1fr; }
   .stops::before { left: 51px; }
   .stop-btn { grid-template-columns: 58px 1fr; }
   .thumb { width: 58px; height: 58px; }
@@ -284,7 +288,7 @@ footer { margin-top: 50px; border-top: 3px double var(--ink); padding: 18px 0 40
 
   <div class="sec-head" id="plan">
     <span class="num">i.</span>
-    <div><h3>The itinerary</h3><p>Choose a day, then click a stop to fly the map there.</p></div>
+    <div><h3>The itinerary</h3><p>Choose a day to see its walk, then click a stop to fly the map there.</p></div>
   </div>
 
   <section class="planner">
@@ -437,6 +441,7 @@ const LIC = {
 };
 
 // t = time, soft = approximate/sequence, p = place id (null = not in Rome)
+// by = how you get to this stop from the previous one, when it isn't on foot
 const DAYS = [
   { key: "d1", dow: "Fri", date: "18 Dec", title: "Arrival and <i>the Christmas-lights walk</i>", sub: "A late night · about 5 km on foot · nothing to book",
     intro: "Land in the dark, drop your bags and head straight out. Rome looks its best at night in December, and Trevi is yours for free after ten.",
@@ -444,7 +449,7 @@ const DAYS = [
       { t: "12:30", p: null, n: "Larnaca Airport", d: "Park and check in. Cyprus time." },
       { t: "14:40", p: null, n: "CY340 takes off", d: "Economy Basic: 10 kg cabin bag and personal item included." },
       { t: "17:00", p: "fco", d: "Land at T3. Rome is 1 hour behind Cyprus." },
-      { t: "~17:45", p: "hotel", d: "Terravision bus to Termini (~19:00), then a 5-minute walk to check in.", soft: true },
+      { t: "~17:45", p: "hotel", by: { mode: "bus", label: "Terravision bus to Termini", time: "~55 min" }, d: "Terravision bus to Termini (~19:00), then a 5-minute walk to check in.", soft: true },
       { t: "19:30", p: "mercato", d: "Dinner in the Termini food hall, about €12–15." },
       { t: "21:00", p: "quirinale", d: "Start the night walk along Via Nazionale." },
       { t: "22:00+", p: "trevi", d: "Basin access is free after 22:00.", cost: "Free", soft: true },
@@ -456,7 +461,7 @@ const DAYS = [
     intro: "Be first through the doors at eight and see the Sistine Chapel before the crowds arrive. Then pizza by weight, Michelangelo's dome and supper across the river.",
     stops: [
       { t: "07:30", p: "hotel", d: "Supermarket breakfast in your room, then Metro A Termini → Ottaviano (€1.50)." },
-      { t: "08:00", p: "vatican", d: "Book the first slot. Allow 3–3.5 hours.", cost: "€25" },
+      { t: "08:00", p: "vatican", by: { mode: "metro", label: "Metro A, Termini → Ottaviano", time: "≈15 min" }, d: "Book the first slot. Allow 3–3.5 hours.", cost: "€25" },
       { t: "12:00", p: "pizzarium", d: "Pizza al taglio sold by weight, about €8–10." },
       { t: "13:30", p: "stpeters", d: "Free. Optional dome climb (€10–22) from the buffer.", cost: "Free" },
       { t: "15:30", p: "conciliazione", d: "Walk from St Peter's towards the river." },
@@ -465,7 +470,7 @@ const DAYS = [
       { t: "then", p: "campo", d: "Then cross the Tiber to Trastevere.", soft: true },
       { t: "18:30", p: "trastevere", d: "Dinner and street food, about €15." },
       { t: "then", p: "suppli", d: "Supplì to start.", soft: true },
-      { t: "21:00", p: "venezia", d: "Tram 8 to Piazza Venezia, then walk or bus back (€1.50)." }
+      { t: "21:00", p: "venezia", by: { mode: "tram", label: "Tram 8 to Piazza Venezia", time: "≈15 min" }, d: "Tram 8 to Piazza Venezia, then walk or bus back (€1.50)." }
     ] },
   { key: "d3", dow: "Sun", date: "20 Dec", title: "Ancient Rome <i>to the Spanish Steps</i>", sub: "Early-ish start · Colosseum at 09:00 · sunset from the Pincio",
     intro: "Two thousand years of history before lunch, then a long walk under the lights to see the sun set over the domes.",
@@ -481,7 +486,7 @@ const DAYS = [
       { t: "then", p: "condotti", d: "See the Via Condotti lights.", soft: true },
       { t: "~16:40", p: "pincio", d: "Sunset over Rome.", soft: true },
       { t: "then", p: "popolo", d: "Walk down to the piazza.", soft: true },
-      { t: "18:30", p: "hotel", d: "Metro A Flaminio → Termini. Pizzeria or trattoria near the hotel, about €15. Then an early night." }
+      { t: "18:30", p: "hotel", by: { mode: "metro", label: "Metro A, Flaminio → Termini", time: "≈10 min" }, d: "Metro A Flaminio → Termini. Pizzeria or trattoria near the hotel, about €15. Then an early night." }
     ] },
   { key: "d4", dow: "Mon", date: "21 Dec", title: "The Pantheon <i>and a last slice</i>", sub: "Relaxed start · souvenirs · fly home in the evening",
     intro: "A slow last morning: Hadrian's dome, an espresso standing at the bar, presents for home and one more look at the market.",
@@ -491,7 +496,7 @@ const DAYS = [
       { t: "12:00", p: "forno", d: "Pizza bianca or rossa, about €6–8." },
       { t: "then", p: "navona", d: "A last look at the market in daylight.", soft: true },
       { t: "14:00", p: "hotel", d: "Pick up your bags. Terravision to the airport at about 14:45 (allow an hour)." },
-      { t: "18:10", p: "fco", d: "CY341 departs and lands in Larnaca at 22:10, Cyprus time. Pick up the car." }
+      { t: "18:10", p: "fco", by: { mode: "bus", label: "Terravision bus to Fiumicino", time: "~1 hr" }, d: "CY341 departs and lands in Larnaca at 22:10, Cyprus time. Pick up the car." }
     ] }
 ];
 
@@ -576,13 +581,15 @@ buildMarkers();
 map.on("load", () => {
   map.addSource("route", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
   map.addLayer({ id: "route-casing", type: "line", source: "route", paint: { "line-color": "#ffffff", "line-width": 7, "line-opacity": .85 }, layout: { "line-cap": "round", "line-join": "round" } });
-  map.addLayer({ id: "route", type: "line", source: "route", paint: { "line-color": "#a6362a", "line-width": 3.5, "line-dasharray": [1.5, 1.2] }, layout: { "line-cap": "round", "line-join": "round" } });
+  map.addLayer({ id: "route-transit", type: "line", source: "route", filter: ["!=", ["get", "mode"], "walk"], paint: { "line-color": "#3a342c", "line-width": 3, "line-dasharray": [2, 1.6] }, layout: { "line-cap": "round", "line-join": "round" } });
+  map.addLayer({ id: "route", type: "line", source: "route", filter: ["==", ["get", "mode"], "walk"], paint: { "line-color": ROUTE_PINK, "line-width": 4 }, layout: { "line-cap": "round", "line-join": "round" } });
   // warm the 3D buildings to look like Roman stone
   if (map.getLayer("building-3d")) {
     map.setPaintProperty("building-3d", "fill-extrusion-color", ["interpolate", ["linear"], ["get", "render_height"], 0, "#e9d9bf", 30, "#dcc29b", 80, "#cfae80"]);
     map.setPaintProperty("building-3d", "fill-extrusion-opacity", .92);
   }
   showDay(current, false);
+  fitDay(0);
 });
 
 /* ---------- itinerary ---------- */
@@ -612,10 +619,12 @@ function showDay(i, fly) {
   panel.innerHTML = `<h4 class="day-title">${d.title}</h4><p class="day-sub">${d.dow} ${d.date} 2026 · ${d.sub}</p><p class="day-intro">${d.intro}</p>
     <ol class="stops">${d.stops.map((s, k) => {
       if (!s.p) return `<li class="stop nopin"><span class="time">${s.t}</span><span class="dot"></span><div class="stop-btn"><span><span class="stop-name">${s.n}</span><span class="stop-note">${s.d}</span><span class="stop-meta" style="color:var(--ink-3)">Larnaca · not on the map</span></span></div></li>`;
-      const p = P[s.p]; n++;
+      const p = P[s.p], nx = d.stops[k + 1]; n++;
+      const leg = nx && nx.p && nx.p !== s.p
+        ? `<li class="leg ${nx.by ? "transit" : ""}" data-k="${k}"><span class="lt">${nx.by ? `${MODE_ICON[nx.by.mode]} ${nx.by.label} · ${nx.by.time}` : `${MODE_ICON.walk} Working out the walk…`}</span></li>` : "";
       return `<li class="stop" data-p="${s.p}" data-k="${k}"><span class="time ${s.soft ? "soft" : ""}">${s.t}</span><span class="dot"></span>
         <button class="stop-btn" type="button" aria-label="Show ${p.name} on the map"><img class="thumb" src="${p.img}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
-        <span><span class="stop-name">${p.name}</span><span class="stop-note">${s.d}</span>${s.cost ? `<span class="stop-meta">${s.cost}</span>` : ""}</span></button></li>`;
+        <span><span class="stop-name">${p.name}</span><span class="stop-note">${s.d}</span>${s.cost ? `<span class="stop-meta">${s.cost}</span>` : ""}</span></button></li>${leg}`;
     }).join("")}</ol>`;
   panel.querySelectorAll(".stop[data-p] .stop-btn").forEach(b => b.addEventListener("click", () => {
     const li = b.closest(".stop");
@@ -635,24 +644,76 @@ function showDay(i, fly) {
   const order = [];
   d.stops.forEach(s => { if (s.p && !order.includes(s.p)) order.push(s.p); });
   order.forEach((id, k) => markers[id].getElement().querySelector("span").textContent = k + 1);
-  // route line (skip the airport leg so the city stays in frame)
-  const pts = d.stops.filter(s => s.p && s.p !== "fco").map(s => P[s.p].ll);
-  if (map.getSource("route")) {
-    map.getSource("route").setData({ type: "Feature", geometry: { type: "LineString", coordinates: pts } });
-    map.setPaintProperty("route", "line-color", cols[d.key]);
-  }
+  drawRoutes(i);
   popup.remove();
   if (fly) fitDay();
 }
 
-function fitDay() {
+/* ---------- walking routes ---------- */
+// Foot routing from the free FOSSGIS OSRM server: no key or account needed
+const OSRM = "https://routing.openstreetmap.de/routed-foot/route/v1/foot/";
+const ROUTE_PINK = "#d6457f";
+const MODE_ICON ={ walk: "🚶", bus: "🚌", metro: "🚇", tram: "🚋", taxi: "🚕" };
+const walkCache = {};
+let drawTok = 0, legTags = [];
+
+function crowKm(a, b) {
+  const r = Math.PI / 180, dLat = (b[1] - a[1]) * r, dLng = (b[0] - a[0]) * r;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a[1] * r) * Math.cos(b[1] * r) * Math.sin(dLng / 2) ** 2;
+  return 12742 * Math.asin(Math.sqrt(h));
+}
+function fetchWalk(from, to) {
+  const key = from + ">" + to, a = P[from].ll, b = P[to].ll;
+  if (!walkCache[key]) {
+    walkCache[key] = fetch(`${OSRM}${a[0]},${a[1]};${b[0]},${b[1]}?overview=full&geometries=geojson`)
+      .then(r => r.ok ? r.json() : Promise.reject(r.status))
+      .then(j => { const rt = j.routes[0]; return { coords: rt.geometry.coordinates, min: Math.max(1, Math.round(rt.duration / 60)), km: rt.distance / 1000, ok: true }; })
+      .catch(() => {
+        // service unreachable: straight line, time guessed at 5 km/h with a detour factor; retry next time
+        delete walkCache[key];
+        const km = crowKm(a, b) * 1.3;
+        return { coords: [a, b], min: Math.max(1, Math.round(km / 5 * 60)), km, ok: false };
+      });
+  }
+  return walkCache[key];
+}
+
+async function drawRoutes(i) {
+  const tok = ++drawTok, d = DAYS[i];
+  const legs = [];
+  d.stops.forEach((s, k) => { const nx = d.stops[k + 1]; if (s.p && nx && nx.p && nx.p !== s.p) legs.push({ k, from: s.p, to: nx.p, by: nx.by }); });
+  const res = await Promise.all(legs.map(l => l.by ? null : fetchWalk(l.from, l.to)));
+  if (tok !== drawTok) return; // a newer day/theme redraw has started
+
+  legTags.forEach(m => m.remove()); legTags = [];
+  const feats = legs.map((l, j) => {
+    const coords = l.by ? [P[l.from].ll, P[l.to].ll] : res[j].coords;
+    const r = res[j];
+    const full = l.by ? `${MODE_ICON[l.by.mode]} ${l.by.label} · ${l.by.time}`
+      : `${MODE_ICON.walk} ${r.ok ? "" : "≈"}${r.min} min walk · ${r.km.toFixed(1)} km${r.ok ? "" : " (estimate, routing offline)"}`;
+    const lt = panel.querySelector(`.leg[data-k="${l.k}"] .lt`);
+    if (lt) lt.textContent = full;
+    // time tag at the middle of the leg
+    const el = document.createElement("div");
+    el.className = "leg-tag";
+    el.style.setProperty("--lc", l.by ? "#3a342c" : ROUTE_PINK);
+    el.textContent = l.by ? `${MODE_ICON[l.by.mode]} ${l.by.time}` : `${MODE_ICON.walk} ${r.ok ? "" : "≈"}${r.min} min`;
+    if (map.getSource("route")) legTags.push(new maplibregl.Marker({ element: el }).setLngLat(coords[Math.floor(coords.length / 2)]).addTo(map));
+    return { type: "Feature", properties: { mode: l.by ? l.by.mode : "walk" }, geometry: { type: "LineString", coordinates: coords } };
+  });
+  if (map.getSource("route")) {
+    map.getSource("route").setData({ type: "FeatureCollection", features: feats });
+  }
+}
+
+function fitDay(duration = 1600) {
   const d = DAYS[current];
   const ids = d.stops.filter(s => s.p && s.p !== "fco").map(s => s.p);
   const b = new maplibregl.LngLatBounds();
   ids.forEach(id => b.extend(P[id].ll));
-  map.fitBounds(b, { padding: { top: 80, bottom: 50, left: 50, right: 50 }, pitch: 55, bearing: -17, duration: 1600, maxZoom: 15.5 });
+  map.fitBounds(b, { padding: { top: 80, bottom: 50, left: 50, right: 50 }, pitch: 55, bearing: -17, duration, maxZoom: 15.5 });
 }
-document.getElementById("fitDay").addEventListener("click", fitDay);
+document.getElementById("fitDay").addEventListener("click", () => fitDay());
 document.getElementById("fitAll").addEventListener("click", () => {
   const b = new maplibregl.LngLatBounds(); Object.entries(P).forEach(([k, p]) => { if (k !== "fco") b.extend(p.ll); });
   map.fitBounds(b, { padding: 50, pitch: 50, bearing: -17, duration: 1600 });
